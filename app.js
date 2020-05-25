@@ -100,7 +100,7 @@ app.get('/', (req, res) => {
 // @route POST /upload
 // @desc  Uploads file to DB
 app.post('/upload', check,upload.single('file'), (req, res) => {
-  res.status(200).json({ message:"uploaded" });
+  res.status(200).json({ message:"uploaded" ,bod:req.body});
   // res.redirect('/');
 });
 
