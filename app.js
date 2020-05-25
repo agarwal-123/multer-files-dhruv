@@ -171,6 +171,6 @@ app.delete('/files/',check, (req, res) => {
   });
 });
 
-const port = 5000;
+const port = 5000 ||process.env;
 
 app.listen(port, () => console.log(`Server started on port ${port}`));
