@@ -8,6 +8,9 @@ const GridFsStorage = require('multer-gridfs-storage');
 const Grid = require('gridfs-stream');
 const methodOverride = require('method-override');
 const jwt= require('jsonwebtoken')
+const test=require('./models/test')
+
+
 
 const app = express();
 
@@ -15,15 +18,6 @@ const app = express();
 app.use(bodyParser.json());
 app.use(methodOverride('_method'));
 app.set('view engine', 'ejs');
-
-//cors
-app.all('*', function(req, res, next) {
-     var origin = req.get('origin'); 
-     res.header('Access-Control-Allow-Origin', origin);
-     res.header("Access-Control-Allow-Headers", "X-Requested-With");
-     res.header('Access-Control-Allow-Headers', 'Content-Type');
-     next();
-});
 
 // Mongo URI
 const mongoURI = 'mongodb+srv://imsHP:imsHP@cluster0-exoql.mongodb.net/test?retryWrites=true&w=majority';
@@ -71,7 +65,19 @@ const storage = new GridFsStorage({
         if (err) {
           return reject(err);
         }
-        const filename = userID// + path.extname(file.originalname);
+        var filename = userID
+        if (path.extname(file.originalname) === '.jpeg' || path.extname(file.originalname) === '.png')
+          {filename = userID
+          // + path.extname(file.originalname);
+        }
+        else{
+          filename = buf.toString('hex') + path.extname(file.originalname);
+
+          const itm=new test({userID,file:filename}) //save Name to Test database
+          itm.save()
+        }
+ 
+        console.log(filename)
         const fileInfo = {
           filename: filename,
           bucketName: 'uploads'
@@ -109,8 +115,20 @@ app.get('/', (req, res) => {
 // @route POST /upload
 // @desc  Uploads file to DB
 app.post('/upload', check,upload.single('file'), (req, res) => {
-  res.status(200).json({ message:"uploaded" ,bod:req.body});
+  // test1=mongoose.test;
+
+  res.status(200).json({ message:"uploaded" });
   // res.redirect('/');
+});
+
+
+
+//Get all Uploads of a user
+app.get('/allTests',check,async (req, res) => {
+  tup = await test.find({userID: userID})
+  res.status(200).json({tup})
+
+
 });
 
 // @route GET /files
@@ -140,7 +158,8 @@ app.get('/files/:filename', (req, res) => {
       });
     }
     // File exists
-    return res.json(file);
+      const readstream = gfs.createReadStream(file.filename);
+      readstream.pipe(res);
   });
 });
 
@@ -180,5 +199,8 @@ app.delete('/files/',check, (req, res) => {
   });
 });
 
-const port=process.env.PORT || 3000
+
+
+const port = process.env.PORT||5000;
+
 app.listen(port, () => console.log(`Server started on port ${port}`));
